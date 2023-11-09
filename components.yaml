@@ -1,0 +1,140 @@
+components:
+  parameters:
+    ETag:
+      in: header
+      name: ETag
+      description: Etag header
+      schema:
+        type: string
+      required: false
+    IfNoneMatch:
+      in: header
+      name: If-None-Match
+      description: If Not Match header
+      schema:
+        type: string
+      required: false
+    Id:
+      in: path
+      name: id
+      schema:
+        type: string
+        format: uuid
+      required: true
+
+  schemas:
+    Date:
+      type: string
+      format: date-time
+    Location:
+      type: string
+      format: uri
+    ErrorDescription:
+      type: array
+      items:
+        type: object
+        properties:
+          code:
+            type: string
+          message:
+            type: string
+          details:
+            $ref: '#/components/schemas/ErrorDetail'
+        required:
+          - code
+          - message
+    ErrorDetail:
+      type: array
+      items:
+        type: object
+        properties:
+          field:
+            type: string
+          message:
+            type: string
+        required:
+          - field
+          - message
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+        errors:
+          $ref: '#/components/schemas/ErrorDescription'
+      required:
+        - message
+  headers:
+    ContentType:
+      description: Content type of the body
+      schema:
+        type: string
+      example: application/json
+    Sunset:
+      description: Date when the deprecated resource will be discontinued
+      schema:
+        $ref: '#/components/schemas/Date'
+    Deprecation:
+      description: This header serves to inform API consumers that the resource is deprecated but still operational.
+      schema:
+        type: boolean
+    Location:
+      description: Resource location
+      schema:
+        $ref: '#/components/schemas/Location'
+      example: 'https://dominodatalab.io/api/projects/v1/projects/abc'
+    OctetStreamContentType:
+      description: Content type for octet stream
+      schema:
+        type: string
+    ContentDisposition:
+      description: Content disposition for octet stream
+      example: |
+        'attachment; filename=<file_name>'
+      schema:
+        type: string
+
+  responses:
+    MovedTemporary:
+      description: Moved Temporary
+      headers:
+        Location:
+          $ref: '#/components/headers/Location'
+
+    Health:
+      description:  Health path for load balancers
+      headers:
+        Date:
+          description: Date of the health ping
+          schema:
+            $ref: '#/components/schemas/Date'
+
+    BadRequestWithError:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      headers:
+        Content-Type:
+          $ref: '#/components/headers/ContentType'
+
+    Unauthenticated:
+      description: Authentication failed
+      headers:
+        WWW-Authenticate:
+          description: the HTTP authentication methods that might be used to gain access to a specific resource.
+          schema:
+            type: string
+          example: Bearer realm="example"
+    Unauthorized:
+      description: Authorization Failed
+    Unavailable:
+      description: Service is unavailable
+    Gone:
+      description: Gone
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
